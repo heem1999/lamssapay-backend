@@ -43,16 +43,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/merchants/register', [MerchantController::class, 'register']);
     Route::get('/merchants/me', [MerchantController::class, 'me']);
     Route::post('/merchants/rotate-keys', [MerchantController::class, 'rotateKeys']);
+
+    // Card Management
+    Route::apiResource('cards', CardController::class)->only(['index', 'store', 'destroy']);
+
+    // Wallet Management
+    Route::apiResource('wallets', WalletController::class)->only(['index', 'show', 'store']);
+
+    // Transaction Management
+    Route::get('/transactions', [TransactionController::class, 'index']);
+    Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+    Route::post('/transactions/transfer', [TransactionController::class, 'transfer']);
 });
-
-// TEMPORARILY PUBLIC FOR DEV (Bypassing Auth)
-// Card Management
-Route::apiResource('cards', CardController::class)->only(['index', 'store', 'destroy']);
-
-// Wallet Management
-Route::apiResource('wallets', WalletController::class)->only(['index', 'show', 'store']);
-
-// Transaction Management
-Route::get('/transactions', [TransactionController::class, 'index']);
-Route::get('/transactions/{id}', [TransactionController::class, 'show']);
-Route::post('/transactions/transfer', [TransactionController::class, 'transfer']);

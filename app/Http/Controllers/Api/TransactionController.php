@@ -23,7 +23,7 @@ class TransactionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user() ?? \App\Models\User::first();
+        $user = $request->user();
         $transactions = $user->transactions()->latest()->paginate(20);
 
         return response()->json($transactions);
@@ -34,7 +34,7 @@ class TransactionController extends Controller
      */
     public function show(Request $request, $id): JsonResponse
     {
-        $user = $request->user() ?? \App\Models\User::first();
+        $user = $request->user();
         $transaction = $user->transactions()->findOrFail($id);
 
         return response()->json([

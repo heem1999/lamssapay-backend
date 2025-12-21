@@ -22,7 +22,7 @@ class CardController extends Controller
     public function index(Request $request): JsonResponse
     {
         \Illuminate\Support\Facades\Log::info('CardController index hit');
-        $user = $request->user() ?? \App\Models\User::first();
+        $user = $request->user();
         $cards = $user->cards;
         return response()->json(['data' => $cards]);
     }

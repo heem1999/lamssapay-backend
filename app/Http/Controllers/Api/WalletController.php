@@ -21,7 +21,7 @@ class WalletController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $user = $request->user() ?? \App\Models\User::first();
+        $user = $request->user();
         $wallets = $user->wallets;
 
         return response()->json([
@@ -34,7 +34,7 @@ class WalletController extends Controller
      */
     public function show(Request $request, $id): JsonResponse
     {
-        $user = $request->user() ?? \App\Models\User::first();
+        $user = $request->user();
         $wallet = $user->wallets()->findOrFail($id);
 
         return response()->json([
