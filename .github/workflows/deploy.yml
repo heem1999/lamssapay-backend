@@ -20,9 +20,11 @@ jobs:
         port: ${{ secrets.HOSTINGER_PORT }}
         source: "."
         target: ${{ secrets.TARGET_DIR }}
-        rm: false # Don't remove existing files immediately, we are syncing
+        rm: false
         strip_components: 0
-        exclude: ".git,.github,tests,node_modules"
+        # Removed 'exclude' as it is not supported by this action version directly in this way
+        # We will rely on .gitignore or clean up later if needed, but scp usually just copies what is there.
+        # If exclusion is critical, we would use rsync, but let's fix the connection first.
 
     - name: Execute remote commands via SSH
       uses: appleboy/ssh-action@master
