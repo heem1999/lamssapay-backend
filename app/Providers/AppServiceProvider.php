@@ -21,6 +21,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\IssuerAdapterInterface::class,
             \App\Services\Adapters\MockIssuerAdapter::class
         );
+
+        $this->app->bind(
+            \App\Interfaces\NotificationAdapterInterface::class,
+            \App\Services\Adapters\MockNotificationAdapter::class
+        );
     }
 
     /**

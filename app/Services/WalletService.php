@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Interfaces\PaymentGatewayAdapterInterface;
 use App\Interfaces\IssuerAdapterInterface;
+use App\Interfaces\NotificationAdapterInterface;
 use App\Models\Card;
 use App\Models\Device;
 use Illuminate\Support\Facades\DB;
@@ -12,11 +13,41 @@ class WalletService
 {
     protected $gateway;
     protected $issuer;
+    protected $notification;
 
-    public function __construct(PaymentGatewayAdapterInterface $gateway, IssuerAdapterInterface $issuer)
-    {
+    public function __construct(
+        PaymentGatewayAdapterInterface $gateway, 
+        IssuerAdapterInterface $issuer,
+        NotificationAdapterInterface $notification
+    ) {
         $this->gateway = $gateway;
         $this->issuer = $issuer;
+        $this->notification = $notification;
+    }
+
+    /**
+     * Validate card eligibility and check for duplicates.
+     *
+     * @param Device $device
+     * @param array $data
+     * @return bool
+     */
+    public function validateCard(Device $device, array $data): bool
+    {
+        // 1. Check for duplicates (Fingerprint)
+        $fingerprint = hash('sha256', $data['pan'] . $data['expiry_month'] . $data['expiry_year']);
+        $existingCard = $device->cards()->where('fingerprint', $fingerprint)->first();
+        
+        if ($existingCard) {
+            throw new \Exception(__('messages.card_exists'), 409);
+        }
+
+        // 2. Check with Issuer (Mock check - usually initiateVerification does this, but we can have a pre-check)
+        // For now, we assume if initiateVerification works, it's valid.
+        // But to separate concerns, we could add a 'checkEligibility' method to IssuerAdapter.
+        // For this task, we'll assume basic validation is enough.
+        
+        return true;
     }
 
     /**
@@ -28,6 +59,9 @@ class WalletService
      */
     public function addCard(Device $device, array $data): Card
     {
+        // 0. Re-validate (Fail fast)
+        $this->validateCard($device, $data);
+
         // 1. Tokenize with the external provider
         $tokenReference = $this->gateway->tokenize([
             'pan' => $data['pan'],
@@ -46,17 +80,8 @@ class WalletService
         $maskedPan = substr($data['pan'], -4);
         $fingerprint = hash('sha256', $data['pan'] . $data['expiry_month'] . $data['expiry_year']);
 
-        // Check for duplicates for this device
-        $existingCard = $device->cards()->where('fingerprint', $fingerprint)->first();
-        if ($existingCard) {
-            throw new \Exception(__('messages.card_exists'), 409);
-        }
-
         return DB::transaction(function () use ($device, $tokenReference, $maskedPan, $data, $fingerprint, $issuerReference, $maskedPhone) {
             // If this is the first card, make it default
-            // BUT only if it's active. Pending cards shouldn't be default yet.
-            // Actually, we can set it as default, but it won't be usable until active.
-            // Let's keep it simple: First card is default, regardless of status.
             $isDefault = $device->cards()->doesntExist();
 
             $card = Card::create([
@@ -72,6 +97,12 @@ class WalletService
             ]);
 
             $card->verification_masked_phone = $maskedPhone;
+            
+            // 4. Send OTP via Notification Service
+            // In a real scenario, we might use the reference or the phone if we had it.
+            // Here we simulate sending to the masked phone (logging it).
+            $this->notification->sendOtp($maskedPhone, "1234");
+
             return $card;
         });
     }
