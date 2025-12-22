@@ -24,6 +24,10 @@ class Card extends Model
         'fingerprint',
     ];
 
+    protected $casts = [
+        'is_default' => 'boolean',
+    ];
+
     public function device()
     {
         return $this->belongsTo(Device::class);

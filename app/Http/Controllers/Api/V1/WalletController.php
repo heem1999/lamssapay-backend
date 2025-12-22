@@ -52,7 +52,8 @@ class WalletController extends Controller
                 'data' => $card
             ], 201);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to add card: ' . $e->getMessage()], 500);
+            $status = $e->getCode() === 409 ? 409 : 500;
+            return response()->json(['message' => $e->getMessage()], $status);
         }
     }
 
