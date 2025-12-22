@@ -30,8 +30,6 @@ class WalletController extends Controller
 
     public function store(Request $request)
     {
-        \Illuminate\Support\Facades\Log::info('WalletController::store hit', ['request' => $request->except(['pan', 'cvv'])]);
-
         $device = $request->attributes->get('device');
 
         $validator = Validator::make($request->all(), [
@@ -44,7 +42,6 @@ class WalletController extends Controller
         ]);
 
         if ($validator->fails()) {
-            \Illuminate\Support\Facades\Log::warning('WalletController::store validation failed', $validator->errors()->toArray());
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
@@ -54,9 +51,7 @@ class WalletController extends Controller
                 'message' => 'Card added successfully',
                 'data' => $card
             ], 201);
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Add Card Failed: ' . $e->getMessage());
-            \Illuminate\Support\Facades\Log::error($e->getTraceAsString());
+        } catch (\Exception $e) {
             return response()->json(['message' => 'Failed to add card: ' . $e->getMessage()], 500);
         }
     }
