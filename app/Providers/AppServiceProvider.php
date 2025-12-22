@@ -12,7 +12,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            \App\Interfaces\PaymentGatewayAdapterInterface::class,
+            \App\Services\Gateways\MockPaymentGatewayAdapter::class
+        );
     }
 
     /**
