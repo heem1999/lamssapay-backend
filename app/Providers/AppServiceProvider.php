@@ -22,9 +22,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Services\Adapters\MockIssuerAdapter::class
         );
 
+        // Phase 4: SMS Provider Abstraction
         $this->app->bind(
-            \App\Interfaces\NotificationAdapterInterface::class,
-            \App\Services\Adapters\MockNotificationAdapter::class
+            \App\Interfaces\SmsProviderInterface::class,
+            \App\Services\Gateways\Sms\MockSmsProvider::class
         );
     }
 

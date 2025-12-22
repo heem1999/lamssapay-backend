@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Interfaces\PaymentGatewayAdapterInterface;
 use App\Interfaces\IssuerAdapterInterface;
-use App\Interfaces\NotificationAdapterInterface;
+use App\Services\NotificationService;
 use App\Models\Card;
 use App\Models\Device;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +18,7 @@ class WalletService
     public function __construct(
         PaymentGatewayAdapterInterface $gateway, 
         IssuerAdapterInterface $issuer,
-        NotificationAdapterInterface $notification
+        NotificationService $notification
     ) {
         $this->gateway = $gateway;
         $this->issuer = $issuer;
