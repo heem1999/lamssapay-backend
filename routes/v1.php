@@ -59,15 +59,6 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::get('/merchants/me', [MerchantController::class, 'me']);
     Route::post('/merchants/rotate-keys', [MerchantController::class, 'rotateKeys']);
 
-    // Wallet & Card Management (Aligned with Android App)
-    Route::prefix('wallet/cards')->group(function () {
-        Route::get('/', [WalletController::class, 'index']);
-        Route::post('/', [WalletController::class, 'store']);
-        Route::post('/{id}/verify', [WalletController::class, 'verify']);
-        Route::delete('/{id}', [WalletController::class, 'destroy']);
-        Route::post('/{id}/default', [WalletController::class, 'setDefault']);
-    });
-
     // Transaction Management
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);
@@ -77,4 +68,13 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
 // Device-only Protected Routes (No User Auth required, just Device Auth)
 Route::middleware(['device.gateway'])->group(function () {
     Route::post('wallets/validate', [WalletController::class, 'validateCard']);
+
+    // Wallet & Card Management (Device Bound)
+    Route::prefix('wallet/cards')->group(function () {
+        Route::get('/', [WalletController::class, 'index']);
+        Route::post('/', [WalletController::class, 'store']);
+        Route::post('/{id}/verify', [WalletController::class, 'verify']);
+        Route::delete('/{id}', [WalletController::class, 'destroy']);
+        Route::post('/{id}/default', [WalletController::class, 'setDefault']);
+    });
 });
