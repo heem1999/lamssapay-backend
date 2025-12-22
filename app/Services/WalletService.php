@@ -47,7 +47,8 @@ class WalletService
         
         if ($existingCard) {
             \Illuminate\Support\Facades\Log::warning("Duplicate card found: {$existingCard->id}");
-            throw new \Exception(__('messages.card_exists'), 409);
+            // Explicitly set the message to ensure it's clear
+            throw new \Exception("Card already exists in your wallet", 409);
         }
 
         // 2. Check with Issuer (Eligibility Check)
