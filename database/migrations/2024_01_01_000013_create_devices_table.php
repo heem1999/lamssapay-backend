@@ -49,14 +49,6 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
-            $table->boolean('is_active')->default(true);
-            
-            $table->timestamp('last_active_at')->nullable();
-            $table->timestamps();
-            
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-        });
-    }
 
     /**
      * Reverse the migrations.

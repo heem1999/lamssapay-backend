@@ -21,8 +21,6 @@ class Device extends Model
         'last_ip',
         'last_active_at'
     ];
-        'last_active_at',
-    ];
 
     protected $casts = [
         'is_trusted' => 'boolean',
