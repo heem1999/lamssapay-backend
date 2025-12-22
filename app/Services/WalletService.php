@@ -34,11 +34,19 @@ class WalletService
      */
     public function validateCard(Device $device, array $data): bool
     {
+        // Sanitize PAN (remove spaces/dashes)
+        $cleanPan = preg_replace('/\D/', '', $data['pan']);
+
         // 1. Check for duplicates (Fingerprint)
-        $fingerprint = hash('sha256', $data['pan'] . $data['expiry_month'] . $data['expiry_year']);
+        $fingerprint = hash('sha256', $cleanPan . $data['expiry_month'] . $data['expiry_year']);
+        
+        \Illuminate\Support\Facades\Log::info("Checking duplicate for Device: {$device->id} (UUID: {$device->device_id})");
+        \Illuminate\Support\Facades\Log::info("Fingerprint: {$fingerprint}");
+        
         $existingCard = $device->cards()->where('fingerprint', $fingerprint)->first();
         
         if ($existingCard) {
+            \Illuminate\Support\Facades\Log::warning("Duplicate card found: {$existingCard->id}");
             throw new \Exception(__('messages.card_exists'), 409);
         }
 
@@ -77,8 +85,9 @@ class WalletService
         $maskedPhone = $verificationData['masked_phone'];
 
         // 3. Store the card metadata (NO PAN, NO CVV)
-        $maskedPan = substr($data['pan'], -4);
-        $fingerprint = hash('sha256', $data['pan'] . $data['expiry_month'] . $data['expiry_year']);
+        $cleanPan = preg_replace('/\D/', '', $data['pan']);
+        $maskedPan = substr($cleanPan, -4);
+        $fingerprint = hash('sha256', $cleanPan . $data['expiry_month'] . $data['expiry_year']);
 
         return DB::transaction(function () use ($device, $tokenReference, $maskedPan, $data, $fingerprint, $issuerReference, $maskedPhone) {
             // If this is the first card, make it default
