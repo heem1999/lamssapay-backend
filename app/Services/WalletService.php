@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Interfaces\PaymentGatewayAdapterInterface;
+use App\Interfaces\IssuerAdapterInterface;
 use App\Models\Card;
 use App\Models\Device;
 use Illuminate\Support\Facades\DB;
@@ -10,10 +11,12 @@ use Illuminate\Support\Facades\DB;
 class WalletService
 {
     protected $gateway;
+    protected $issuer;
 
-    public function __construct(PaymentGatewayAdapterInterface $gateway)
+    public function __construct(PaymentGatewayAdapterInterface $gateway, IssuerAdapterInterface $issuer)
     {
         $this->gateway = $gateway;
+        $this->issuer = $issuer;
     }
 
     /**
@@ -26,8 +29,6 @@ class WalletService
     public function addCard(Device $device, array $data): Card
     {
         // 1. Tokenize with the external provider
-        // We pass the sensitive data to the adapter, which sends it to the bank/gateway.
-        // The adapter returns a safe token reference.
         $tokenReference = $this->gateway->tokenize([
             'pan' => $data['pan'],
             'cvv' => $data['cvv'],
@@ -36,12 +37,11 @@ class WalletService
             'holder_name' => $data['holder_name'] ?? '',
         ]);
 
-        // 2. Store the card metadata (NO PAN, NO CVV)
-        // We only store the last 4 digits for display purposes.
+        // 2. Initiate Issuer Verification (OTP)
+        $issuerReference = $this->issuer->initiateVerification($data);
+
+        // 3. Store the card metadata (NO PAN, NO CVV)
         $maskedPan = substr($data['pan'], -4);
-        
-        // Generate a fingerprint to prevent duplicates (simple hash of PAN + Expiry)
-        // In a real scenario, the gateway might provide a fingerprint.
         $fingerprint = hash('sha256', $data['pan'] . $data['expiry_month'] . $data['expiry_year']);
 
         // Check for duplicates for this device
@@ -50,20 +50,41 @@ class WalletService
             throw new \Exception(__('messages.card_exists'), 409);
         }
 
-        return DB::transaction(function () use ($device, $tokenReference, $maskedPan, $data, $fingerprint) {
+        return DB::transaction(function () use ($device, $tokenReference, $maskedPan, $data, $fingerprint, $issuerReference) {
             // If this is the first card, make it default
-            $isDefault = $device->cards()->doesntExist();
+            $isDefault = $device->cards()->where('status', 'active')->doesntExist();
 
             return Card::create([
                 'device_id' => $device->id,
                 'token_reference' => $tokenReference,
                 'masked_pan' => $maskedPan,
-                'scheme' => $data['scheme'], // e.g., 'visa', 'mastercard'
-                'card_art' => null, // Can be assigned based on scheme later
+                'scheme' => $data['scheme'],
+                'card_art' => null,
                 'is_default' => $isDefault,
                 'fingerprint' => $fingerprint,
+                'status' => 'pending', // Wait for OTP
+                'issuer_reference' => $issuerReference,
             ]);
         });
+    }
+
+    /**
+     * Verify the card with OTP.
+     */
+    public function verifyCard(Device $device, $cardId, $otp)
+    {
+        $card = $device->cards()->findOrFail($cardId);
+
+        if ($card->status === 'active') {
+            return $card;
+        }
+
+        if ($this->issuer->validateOtp($card->issuer_reference, $otp)) {
+            $card->update(['status' => 'active']);
+            return $card;
+        }
+
+        throw new \Exception('Invalid OTP', 400);
     }
 
     /**
@@ -71,7 +92,8 @@ class WalletService
      */
     public function getCards(Device $device)
     {
-        return $device->cards()->orderBy('created_at', 'desc')->get();
+        // Only show active cards
+        return $device->cards()->where('status', 'active')->orderBy('created_at', 'desc')->get();
     }
 
     /**

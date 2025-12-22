@@ -48,11 +48,35 @@ class WalletController extends Controller
         try {
             $card = $this->walletService->addCard($device, $request->all());
             return response()->json([
-                'message' => __('messages.card_added'),
+                'message' => 'Verification required',
                 'data' => $card
-            ], 201);
+            ], 202); // 202 Accepted (Processing)
         } catch (\Exception $e) {
             $status = $e->getCode() === 409 ? 409 : 500;
+            return response()->json(['message' => $e->getMessage()], $status);
+        }
+    }
+
+    public function verify(Request $request, $id)
+    {
+        $device = $request->attributes->get('device');
+        
+        $validator = Validator::make($request->all(), [
+            'otp' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $card = $this->walletService->verifyCard($device, $id, $request->otp);
+            return response()->json([
+                'message' => __('messages.card_added'),
+                'data' => $card
+            ], 200);
+        } catch (\Exception $e) {
+            $status = $e->getCode() === 400 ? 400 : 500;
             return response()->json(['message' => $e->getMessage()], $status);
         }
     }

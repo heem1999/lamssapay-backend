@@ -32,6 +32,7 @@ Route::middleware(['device.gateway'])->group(function () {
     Route::prefix('wallet')->group(function () {
         Route::get('/cards', [WalletController::class, 'index']);
         Route::post('/cards', [WalletController::class, 'store']);
+        Route::post('/cards/{id}/verify', [WalletController::class, 'verify']);
         Route::delete('/cards/{id}', [WalletController::class, 'destroy']);
         Route::post('/cards/{id}/default', [WalletController::class, 'setDefault']);
     });

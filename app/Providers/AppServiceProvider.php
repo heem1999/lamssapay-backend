@@ -16,6 +16,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\PaymentGatewayAdapterInterface::class,
             \App\Services\Gateways\MockPaymentGatewayAdapter::class
         );
+
+        $this->app->bind(
+            \App\Interfaces\IssuerAdapterInterface::class,
+            \App\Services\Adapters\MockIssuerAdapter::class
+        );
     }
 
     /**
