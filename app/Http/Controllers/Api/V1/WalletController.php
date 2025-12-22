@@ -48,7 +48,7 @@ class WalletController extends Controller
         try {
             $card = $this->walletService->addCard($device, $request->all());
             return response()->json([
-                'message' => 'Card added successfully',
+                'message' => __('messages.card_added'),
                 'data' => $card
             ], 201);
         } catch (\Exception $e) {
@@ -63,9 +63,9 @@ class WalletController extends Controller
 
         try {
             $this->walletService->removeCard($device, $id);
-            return response()->json(['message' => 'Card removed successfully']);
+            return response()->json(['message' => __('messages.card_removed')]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to remove card'], 500);
+            return response()->json(['message' => __('messages.card_remove_failed')], 500);
         }
     }
 
@@ -76,11 +76,11 @@ class WalletController extends Controller
         try {
             $card = $this->walletService->setDefaultCard($device, $id);
             return response()->json([
-                'message' => 'Card set as default successfully',
+                'message' => __('messages.card_default_set'),
                 'data' => $card
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to set default card'], 500);
+            return response()->json(['message' => __('messages.card_default_failed')], 500);
         }
     }
 }

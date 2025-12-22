@@ -47,7 +47,7 @@ class WalletService
         // Check for duplicates for this device
         $existingCard = $device->cards()->where('fingerprint', $fingerprint)->first();
         if ($existingCard) {
-            throw new \Exception('Card already exists in wallet', 409);
+            throw new \Exception(__('messages.card_exists'), 409);
         }
 
         return DB::transaction(function () use ($device, $tokenReference, $maskedPan, $data, $fingerprint) {
