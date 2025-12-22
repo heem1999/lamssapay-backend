@@ -2,25 +2,25 @@
 
 namespace App\Services;
 
-use App\Interfaces\PaymentGatewayAdapterInterface;
 use App\Interfaces\IssuerAdapterInterface;
 use App\Services\NotificationService;
+use App\Services\TokenizationService;
 use App\Models\Card;
 use App\Models\Device;
 use Illuminate\Support\Facades\DB;
 
 class WalletService
 {
-    protected $gateway;
+    protected $tokenizationService;
     protected $issuer;
     protected $notification;
 
     public function __construct(
-        PaymentGatewayAdapterInterface $gateway, 
+        TokenizationService $tokenizationService, 
         IssuerAdapterInterface $issuer,
         NotificationService $notification
     ) {
-        $this->gateway = $gateway;
+        $this->tokenizationService = $tokenizationService;
         $this->issuer = $issuer;
         $this->notification = $notification;
     }
@@ -72,13 +72,13 @@ class WalletService
         $this->validateCard($device, $data);
 
         // 1. Tokenize with the external provider
-        $tokenReference = $this->gateway->tokenize([
+        $tokenReference = $this->tokenizationService->createToken([
             'pan' => $data['pan'],
             'cvv' => $data['cvv'],
             'expiry_month' => $data['expiry_month'],
             'expiry_year' => $data['expiry_year'],
             'holder_name' => $data['holder_name'] ?? '',
-        ]);
+        ], $device->device_id);
 
         // 2. Initiate Issuer Verification (OTP)
         $verificationData = $this->issuer->initiateVerification($data);
@@ -155,8 +155,8 @@ class WalletService
     {
         $card = $device->cards()->findOrFail($cardId);
         
-        // Remove from gateway
-        $this->gateway->deleteToken($card->token_reference);
+        // Remove from vault
+        $this->tokenizationService->removeToken($card->token_reference);
 
         $card->delete();
     }

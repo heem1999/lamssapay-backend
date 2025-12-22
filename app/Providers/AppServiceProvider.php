@@ -27,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
             \App\Interfaces\SmsProviderInterface::class,
             \App\Services\Gateways\Sms\MockSmsProvider::class
         );
+
+        // Phase 5: Tokenization Service
+        $this->app->bind(
+            \App\Interfaces\TokenProviderInterface::class,
+            \App\Services\Gateways\Tokenization\MockTokenProvider::class
+        );
     }
 
     /**
