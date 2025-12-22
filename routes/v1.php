@@ -63,11 +63,15 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::apiResource('cards', CardController::class)->only(['index', 'store', 'destroy']);
 
     // Wallet Management
-    Route::post('wallets/validate', [WalletController::class, 'validateCard']);
     Route::apiResource('wallets', WalletController::class)->only(['index', 'show', 'store']);
 
     // Transaction Management
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);
     Route::post('/transactions/transfer', [TransactionController::class, 'transfer']);
+});
+
+// Device-only Protected Routes (No User Auth required, just Device Auth)
+Route::middleware(['device.gateway'])->group(function () {
+    Route::post('wallets/validate', [WalletController::class, 'validateCard']);
 });
