@@ -86,4 +86,23 @@ class WalletService
 
         $card->delete();
     }
+
+    /**
+     * Set a card as default.
+     */
+    public function setDefaultCard(Device $device, $cardId)
+    {
+        return DB::transaction(function () use ($device, $cardId) {
+            // Verify card belongs to device
+            $card = $device->cards()->findOrFail($cardId);
+
+            // Unset all other cards
+            $device->cards()->where('id', '!=', $cardId)->update(['is_default' => false]);
+
+            // Set this card as default
+            $card->update(['is_default' => true]);
+
+            return $card;
+        });
+    }
 }

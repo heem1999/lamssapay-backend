@@ -33,6 +33,7 @@ Route::middleware(['device.gateway'])->group(function () {
         Route::get('/cards', [WalletController::class, 'index']);
         Route::post('/cards', [WalletController::class, 'store']);
         Route::delete('/cards/{id}', [WalletController::class, 'destroy']);
+        Route::post('/cards/{id}/default', [WalletController::class, 'setDefault']);
     });
 });
 

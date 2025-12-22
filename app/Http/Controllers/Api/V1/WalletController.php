@@ -68,4 +68,19 @@ class WalletController extends Controller
             return response()->json(['message' => 'Failed to remove card'], 500);
         }
     }
+
+    public function setDefault(Request $request, $id)
+    {
+        $device = $request->attributes->get('device');
+
+        try {
+            $card = $this->walletService->setDefaultCard($device, $id);
+            return response()->json([
+                'message' => 'Card set as default successfully',
+                'data' => $card
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to set default card'], 500);
+        }
+    }
 }
