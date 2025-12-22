@@ -54,7 +54,10 @@ class WalletService
 
         return DB::transaction(function () use ($device, $tokenReference, $maskedPan, $data, $fingerprint, $issuerReference, $maskedPhone) {
             // If this is the first card, make it default
-            $isDefault = $device->cards()->where('status', 'active')->doesntExist();
+            // BUT only if it's active. Pending cards shouldn't be default yet.
+            // Actually, we can set it as default, but it won't be usable until active.
+            // Let's keep it simple: First card is default, regardless of status.
+            $isDefault = $device->cards()->doesntExist();
 
             $card = Card::create([
                 'device_id' => $device->id,

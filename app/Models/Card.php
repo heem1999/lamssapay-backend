@@ -17,6 +17,8 @@ class Card extends Model
         'card_art',
         'is_default',
         'fingerprint',
+        'status',
+        'issuer_reference',
     ];
 
     protected $hidden = [
