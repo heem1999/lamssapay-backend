@@ -39,14 +39,26 @@ class DeviceGatewayMiddleware
         }
 
         // 2. Validate Device Status via Service
-        if (!$this->deviceService->isDeviceAllowed($deviceId)) {
-            return response()->json([
+        $device = \App\Models\Device::where('device_id', $deviceId)->first();
+
+        if (!$device) {
+             return response()->json([
                 'error' => 'Device Access Denied',
-                'message' => 'This device is not registered or has been blocked.'
+                'message' => 'This device is not registered. Please restart the app to perform handshake.'
             ], 403);
         }
 
-        // 3. (Optional) Rate Limiting Logic could go here or via standard throttle middleware
+        if ($device->status === 'blocked') {
+            return response()->json([
+                'error' => 'Device Blocked',
+                'message' => 'This device has been blocked from accessing the system.'
+            ], 403);
+        }
+
+        // 3. Attach Device to Request for Controllers
+        $request->attributes->add(['device' => $device]);
+
+        // 4. (Optional) Rate Limiting Logic could go here or via standard throttle middleware
 
         return $next($request);
     }
