@@ -28,7 +28,8 @@ return new class extends Migration
     {
         Schema::create('devices', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->index();
+            // Nullable user_id for anonymous device identity (Phase 1)
+            $table->unsignedBigInteger('user_id')->nullable()->index();
             
             $table->string('device_id', 100)->unique(); // Unique hardware ID or generated UUID
             $table->string('device_name', 100)->nullable(); // e.g., "John's iPhone 13"
@@ -38,6 +39,16 @@ return new class extends Migration
             $table->string('fcm_token', 255)->nullable(); // Firebase Cloud Messaging Token
             
             $table->boolean('is_trusted')->default(false);
+            $table->string('status', 20)->default('active'); // active, blocked
+            $table->ipAddress('last_ip')->nullable();
+            $table->timestamp('last_active_at')->nullable();
+            
+            $table->timestamps();
+            
+            // Foreign key constraint (if user_id is present)
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+        });
+    }
             $table->boolean('is_active')->default(true);
             
             $table->timestamp('last_active_at')->nullable();

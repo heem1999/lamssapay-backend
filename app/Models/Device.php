@@ -17,7 +17,10 @@ class Device extends Model
         'os_version',
         'fcm_token',
         'is_trusted',
-        'is_active',
+        'status', // Changed from is_active to status
+        'last_ip',
+        'last_active_at'
+    ];
         'last_active_at',
     ];
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CardController;
+use App\Http\Controllers\Api\DeviceController;
 use App\Http\Controllers\Api\MerchantController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UserController;
@@ -18,13 +19,18 @@ Log::info('Routes V1 loaded');
 |--------------------------------------------------------------------------
 */
 
-// Public Routes
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/login/verify-2fa', [AuthController::class, 'verifyTwoFactor']);
+// Device Handshake (Anonymous Entry Point)
+Route::post('/device/handshake', [DeviceController::class, 'handshake']);
 
-// Protected Routes
-Route::middleware('auth:sanctum')->group(function () {
+// Public Routes (Now protected by Device Gateway)
+Route::middleware(['device.gateway'])->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login/verify-2fa', [AuthController::class, 'verifyTwoFactor']);
+});
+
+// Protected Routes (User Auth + Device Gateway)
+Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
