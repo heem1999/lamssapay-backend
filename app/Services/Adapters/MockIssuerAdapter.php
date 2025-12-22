@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class MockIssuerAdapter implements IssuerAdapterInterface
 {
-    public function initiateVerification(array $cardData): string
+    public function initiateVerification(array $cardData): array
     {
         // Simulate calling the bank API to start verification
         $reference = 'REQ_' . uniqid();
@@ -17,7 +17,11 @@ class MockIssuerAdapter implements IssuerAdapterInterface
         Log::info("MockIssuer: Verification initiated for card ending in " . substr($cardData['pan'], -4));
         Log::info("MockIssuer: OTP is 1234 (Reference: $reference)");
 
-        return $reference;
+        // Return reference and a mock masked phone number
+        return [
+            'reference' => $reference,
+            'masked_phone' => '*******123'
+        ];
     }
 
     public function validateOtp(string $reference, string $otp): bool

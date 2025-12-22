@@ -38,7 +38,9 @@ class WalletService
         ]);
 
         // 2. Initiate Issuer Verification (OTP)
-        $issuerReference = $this->issuer->initiateVerification($data);
+        $verificationData = $this->issuer->initiateVerification($data);
+        $issuerReference = $verificationData['reference'];
+        $maskedPhone = $verificationData['masked_phone'];
 
         // 3. Store the card metadata (NO PAN, NO CVV)
         $maskedPan = substr($data['pan'], -4);
@@ -50,11 +52,11 @@ class WalletService
             throw new \Exception(__('messages.card_exists'), 409);
         }
 
-        return DB::transaction(function () use ($device, $tokenReference, $maskedPan, $data, $fingerprint, $issuerReference) {
+        return DB::transaction(function () use ($device, $tokenReference, $maskedPan, $data, $fingerprint, $issuerReference, $maskedPhone) {
             // If this is the first card, make it default
             $isDefault = $device->cards()->where('status', 'active')->doesntExist();
 
-            return Card::create([
+            $card = Card::create([
                 'device_id' => $device->id,
                 'token_reference' => $tokenReference,
                 'masked_pan' => $maskedPan,
@@ -65,6 +67,9 @@ class WalletService
                 'status' => 'pending', // Wait for OTP
                 'issuer_reference' => $issuerReference,
             ]);
+
+            $card->verification_masked_phone = $maskedPhone;
+            return $card;
         });
     }
 
@@ -92,8 +97,11 @@ class WalletService
      */
     public function getCards(Device $device)
     {
-        // Only show active cards
-        return $device->cards()->where('status', 'active')->orderBy('created_at', 'desc')->get();
+        // Show active and pending cards
+        return $device->cards()
+            ->whereIn('status', ['active', 'pending'])
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**

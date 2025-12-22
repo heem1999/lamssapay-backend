@@ -6,12 +6,12 @@ interface IssuerAdapterInterface
 {
     /**
      * Initiate verification for a card.
-     * Returns a reference ID for the verification process.
+     * Returns an array with reference ID and masked phone number.
      *
      * @param array $cardData
-     * @return string
+     * @return array ['reference' => string, 'masked_phone' => string]
      */
-    public function initiateVerification(array $cardData): string;
+    public function initiateVerification(array $cardData): array;
 
     /**
      * Validate the OTP provided by the user.
