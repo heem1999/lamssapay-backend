@@ -59,11 +59,14 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::get('/merchants/me', [MerchantController::class, 'me']);
     Route::post('/merchants/rotate-keys', [MerchantController::class, 'rotateKeys']);
 
-    // Card Management
-    Route::apiResource('cards', CardController::class)->only(['index', 'store', 'destroy']);
-
-    // Wallet Management
-    Route::apiResource('wallets', WalletController::class)->only(['index', 'show', 'store']);
+    // Wallet & Card Management (Aligned with Android App)
+    Route::prefix('wallet/cards')->group(function () {
+        Route::get('/', [WalletController::class, 'index']);
+        Route::post('/', [WalletController::class, 'store']);
+        Route::post('/{id}/verify', [WalletController::class, 'verify']);
+        Route::delete('/{id}', [WalletController::class, 'destroy']);
+        Route::post('/{id}/default', [WalletController::class, 'setDefault']);
+    });
 
     // Transaction Management
     Route::get('/transactions', [TransactionController::class, 'index']);
