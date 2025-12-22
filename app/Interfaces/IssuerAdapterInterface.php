@@ -5,6 +5,14 @@ namespace App\Interfaces;
 interface IssuerAdapterInterface
 {
     /**
+     * Check if the card is eligible for digitization (active, not stolen, etc.).
+     *
+     * @param array $cardData
+     * @return bool
+     */
+    public function checkEligibility(array $cardData): bool;
+
+    /**
      * Initiate verification for a card.
      * Returns an array with reference ID and masked phone number.
      *

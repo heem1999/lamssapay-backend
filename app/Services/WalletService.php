@@ -50,10 +50,10 @@ class WalletService
             throw new \Exception(__('messages.card_exists'), 409);
         }
 
-        // 2. Check with Issuer (Mock check - usually initiateVerification does this, but we can have a pre-check)
-        // For now, we assume if initiateVerification works, it's valid.
-        // But to separate concerns, we could add a 'checkEligibility' method to IssuerAdapter.
-        // For this task, we'll assume basic validation is enough.
+        // 2. Check with Issuer (Eligibility Check)
+        if (!$this->issuer->checkEligibility($data)) {
+            throw new \Exception("Card is not eligible for digitization", 422);
+        }
         
         return true;
     }

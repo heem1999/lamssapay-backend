@@ -52,7 +52,9 @@ class WalletController extends Controller
                 'data' => $card
             ], 202); // 202 Accepted (Processing)
         } catch (\Exception $e) {
-            $status = $e->getCode() === 409 ? 409 : 500;
+            $code = $e->getCode();
+            // Allow 400-level errors to pass through, otherwise 500
+            $status = ($code >= 400 && $code < 500) ? $code : 500;
             return response()->json(['message' => $e->getMessage()], $status);
         }
     }
@@ -105,6 +107,30 @@ class WalletController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json(['message' => __('messages.card_default_failed')], 500);
+        }
+    }
+
+    public function validateCard(Request $request)
+    {
+        $device = $request->attributes->get('device');
+
+        $validator = Validator::make($request->all(), [
+            'pan' => 'required|string|min:13|max:19',
+            'expiry_month' => 'required|string|size:2',
+            'expiry_year' => 'required|string|size:2',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            $this->walletService->validateCard($device, $request->all());
+            return response()->json(['message' => 'Card is valid'], 200);
+        } catch (\Exception $e) {
+            $code = $e->getCode();
+            $status = ($code >= 400 && $code < 500) ? $code : 500;
+            return response()->json(['message' => $e->getMessage()], $status);
         }
     }
 }

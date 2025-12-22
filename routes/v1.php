@@ -63,6 +63,7 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::apiResource('cards', CardController::class)->only(['index', 'store', 'destroy']);
 
     // Wallet Management
+    Route::post('wallets/validate', [WalletController::class, 'validateCard']);
     Route::apiResource('wallets', WalletController::class)->only(['index', 'show', 'store']);
 
     // Transaction Management
