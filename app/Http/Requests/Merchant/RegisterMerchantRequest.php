@@ -14,13 +14,15 @@ class RegisterMerchantRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'business_name' => ['required', 'string', 'max:255'],
-            'business_type' => ['required', 'string', 'max:100'],
-            'business_registration_number' => ['required', 'string', 'max:100'],
-            'tax_id' => ['required', 'string', 'max:50'],
-            'business_email' => ['required', 'email', 'max:255'],
-            'business_phone' => ['required', 'string', 'max:20'],
-            'business_address' => ['required', 'string'],
+            'settlement_card_token' => ['required', 'string'],
+            'device_id' => ['required', 'string'],
+            'business_name' => ['nullable', 'string', 'max:255'],
+            'business_type' => ['nullable', 'string', 'max:100'],
+            'business_registration_number' => ['nullable', 'string', 'max:100'],
+            'tax_id' => ['nullable', 'string', 'max:50'],
+            'business_email' => ['nullable', 'email', 'max:255'],
+            'business_phone' => ['nullable', 'string', 'max:20'],
+            'business_address' => ['nullable', 'string'],
             'documents' => ['nullable', 'array'],
         ];
     }

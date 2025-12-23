@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminMerchantController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CardController;
 use App\Http\Controllers\Api\DeviceController;
@@ -66,6 +67,13 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);
     Route::post('/transactions/transfer', [TransactionController::class, 'transfer']);
+
+    // Admin Routes (Mock: Any authenticated user can access for MVP)
+    Route::prefix('admin')->group(function () {
+        Route::get('/merchants/requests', [AdminMerchantController::class, 'index']);
+        Route::post('/merchants/requests/{id}/approve', [AdminMerchantController::class, 'approve']);
+        Route::post('/merchants/requests/{id}/reject', [AdminMerchantController::class, 'reject']);
+    });
 });
 
 // Device-only Protected Routes (No User Auth required, just Device Auth)
