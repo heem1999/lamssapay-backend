@@ -22,6 +22,9 @@ Log::info('Routes V1 loaded');
 // Device Handshake (Anonymous Entry Point)
 Route::post('/device/handshake', [DeviceController::class, 'handshake']);
 
+// Payment Network Simulation (Phase 7)
+Route::post('/transactions/authorize', [TransactionController::class, 'authorizePayment']);
+
 // Public Routes (Now protected by Device Gateway)
 Route::middleware(['device.gateway'])->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
@@ -42,14 +45,6 @@ Route::middleware(['device.gateway'])->group(function () {
 Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
-
-    // Transactions
-    Route::prefix('transactions')->group(function () {
-        Route::get('/', [TransactionController::class, 'index']);
-        Route::get('/{id}', [TransactionController::class, 'show']);
-        Route::post('/transfer', [TransactionController::class, 'transfer']);
-        Route::post('/payment', [TransactionController::class, 'payment']);
-    });
 
     // Two-Factor Authentication Management
     Route::prefix('2fa')->group(function () {
