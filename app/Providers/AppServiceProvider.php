@@ -4,6 +4,10 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Event;
+use App\Events\TransactionAuthorized;
+use App\Events\TransactionDeclined;
+use App\Listeners\LogTransactionToLedger;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,5 +45,15 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+
+        Event::listen(
+            TransactionAuthorized::class,
+            LogTransactionToLedger::class,
+        );
+
+        Event::listen(
+            TransactionDeclined::class,
+            LogTransactionToLedger::class,
+        );
     }
 }

@@ -48,10 +48,12 @@ class PaymentAuthorizationService
     protected function approve(array $data): array
     {
         $authCode = 'AUTH-' . strtoupper(Str::random(6));
+        $transactionId = 'TXN-' . strtoupper(Str::random(12));
         
         $result = [
             'status' => 'APPROVED',
             'auth_code' => $authCode,
+            'transaction_id' => $transactionId,
             'message' => 'Transaction approved',
             'timestamp' => now()->toIso8601String(),
         ];
@@ -63,9 +65,12 @@ class PaymentAuthorizationService
 
     protected function decline(array $data, string $reason): array
     {
+        $transactionId = 'TXN-' . strtoupper(Str::random(12));
+
         $result = [
             'status' => 'DECLINED',
             'auth_code' => null,
+            'transaction_id' => $transactionId,
             'message' => $reason,
             'timestamp' => now()->toIso8601String(),
         ];
