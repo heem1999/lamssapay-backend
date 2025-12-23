@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Transaction\CreateTransferRequest;
 use App\Models\User;
+use App\Services\Payment\PaymentAuthorizationService;
 use App\Services\Payment\TransactionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,10 +13,12 @@ use Illuminate\Http\Request;
 class TransactionController extends Controller
 {
     protected $transactionService;
+    protected $authService;
 
-    public function __construct(TransactionService $transactionService)
+    public function __construct(TransactionService $transactionService, PaymentAuthorizationService $authService)
     {
         $this->transactionService = $transactionService;
+        $this->authService = $authService;
     }
 
     /**
@@ -80,39 +83,18 @@ class TransactionController extends Controller
      */
     public function authorizePayment(Request $request): JsonResponse
     {
-        $request->validate([
+        $data = $request->validate([
             'card_token' => 'required|string',
             'amount' => 'required|numeric|min:0.01',
             'currency' => 'required|string|size:3',
             'merchant_name' => 'nullable|string',
+            'device_id' => 'nullable|string',
+            'cryptogram' => 'nullable|string',
+            'nfc_type' => 'nullable|string',
         ]);
 
-        // In a real system, we would look up the card by the payment token (DPAN).
-        // For MVP, we assume the card_token is the card ID or a direct reference.
+        $result = $this->authService->authorize($data);
         
-        // Mock Logic:
-        // 1. If amount > 5000, DECLINE (Limit exceeded)
-        // 2. Otherwise, APPROVE
-        
-        $status = 'APPROVED';
-        $message = 'Transaction approved';
-        
-        if ($request->amount > 5000) {
-            $status = 'DECLINED';
-            $message = 'Transaction limit exceeded';
-        }
-
-        // Log the transaction (Mocking the creation)
-        // In production, this would be linked to the actual Card model
-        
-        return response()->json([
-            'status' => $status,
-            'message' => $message,
-            'auth_code' => $status === 'APPROVED' ? strtoupper(uniqid('AUTH')) : null,
-            'transaction_id' => uniqid('TXN'),
-            'amount' => $request->amount,
-            'currency' => $request->currency,
-            'timestamp' => now()->toIso8601String(),
-        ]);
+        return response()->json($result);
     }
 }
