@@ -9,6 +9,8 @@ use App\Services\Payment\TransactionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+use App\Http\Requests\Transaction\ProcessPaymentRequest;
+
 class TransactionController extends Controller
 {
     protected $transactionService;
@@ -16,6 +18,32 @@ class TransactionController extends Controller
     public function __construct(TransactionService $transactionService)
     {
         $this->transactionService = $transactionService;
+    }
+
+    /**
+     * Process a Tap-to-Pay payment.
+     */
+    public function payment(ProcessPaymentRequest $request): JsonResponse
+    {
+        try {
+            $transaction = $this->transactionService->processPayment(
+                $request->user(),
+                $request->card_id,
+                $request->amount,
+                $request->currency,
+                $request->merchant_name,
+                $request->cryptogram
+            );
+
+            return response()->json([
+                'message' => 'Payment successful.',
+                'data' => $transaction,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+            ], 400);
+        }
     }
 
     /**

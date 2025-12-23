@@ -43,6 +43,14 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
+    // Transactions
+    Route::prefix('transactions')->group(function () {
+        Route::get('/', [TransactionController::class, 'index']);
+        Route::get('/{id}', [TransactionController::class, 'show']);
+        Route::post('/transfer', [TransactionController::class, 'transfer']);
+        Route::post('/payment', [TransactionController::class, 'payment']);
+    });
+
     // Two-Factor Authentication Management
     Route::prefix('2fa')->group(function () {
         Route::post('/enable', [AuthController::class, 'enableTwoFactor']);

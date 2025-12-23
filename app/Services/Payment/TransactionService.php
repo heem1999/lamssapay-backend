@@ -86,17 +86,52 @@ class TransactionService
     }
 
     /**
-     * Process a payment to a merchant.
+     * Process a Tap-to-Pay payment.
      */
-    public function payMerchant(User $user, int $merchantId, float $amount, string $currency = 'USD', ?string $description = null): Transaction
+    public function processPayment(User $user, int $cardId, float $amount, string $currency, string $merchantName, string $cryptogram): Transaction
     {
-        // Implementation would be similar, but crediting the merchant's wallet
-        // and linking the merchant_id in the transaction.
-        // For now, we'll stick to the transfer logic as a base.
-        return DB::transaction(function () use ($user, $merchantId, $amount, $currency, $description) {
-             // ... Logic to find merchant user and wallet ...
-             // Placeholder return
-             return new Transaction();
+        return DB::transaction(function () use ($user, $cardId, $amount, $currency, $merchantName, $cryptogram) {
+            // 1. Verify Cryptogram (Mock)
+            if (empty($cryptogram)) {
+                throw new \Exception("Invalid payment cryptogram.");
+            }
+
+            // 2. Get Wallet
+            $wallet = $this->walletService->getWallet($user, $currency);
+            if (!$wallet) {
+                throw new \Exception("User does not have a {$currency} wallet.");
+            }
+
+            // 3. Calculate Fee (e.g., 1% for payments)
+            $fee = $this->feeService->calculateFee($amount, 'payment');
+            $totalAmount = $amount + $fee;
+
+            // 4. Debit User
+            $this->walletService->debit($wallet, $totalAmount);
+
+            // 5. Create Transaction Record
+            $reference = 'PAY-' . strtoupper(Str::random(10));
+
+            $transaction = Transaction::create([
+                'transaction_reference' => $reference,
+                'user_id' => $user->id,
+                'wallet_id' => $wallet->id,
+                'type' => 'payment',
+                'amount' => -$amount,
+                'currency' => $currency,
+                'fee' => $fee,
+                'total_amount' => -$totalAmount,
+                'status' => 'completed',
+                'description' => "Payment to $merchantName",
+                'metadata' => [
+                    'merchant_name' => $merchantName,
+                    'card_id' => $cardId,
+                    'cryptogram_fragment' => substr($cryptogram, 0, 8) . '...'
+                ],
+                'processed_at' => now(),
+            ]);
+
+            return $transaction;
         });
     }
 }
