@@ -42,24 +42,14 @@ class MerchantController extends Controller
     {
         $merchant = $request->user()->merchant;
 
-        if ($merchant) {
-            $data = $merchant->makeVisible(['api_key_live', 'api_key_test'])->toArray();
-            $data['status'] = 'approved';
-            return response()->json([
-                'data' => $data,
-            ]);
+        if (!$merchant) {
+            return response()->json(['message' => 'User is not a merchant.'], 404);
         }
 
-        // Check for latest request status
-        $latestRequest = $request->user()->merchantRequests()->latest()->first();
-
-        if ($latestRequest) {
-            return response()->json([
-                'data' => $latestRequest,
-            ]);
-        }
-
-        return response()->json(['message' => 'User is not a merchant.'], 404);
+        // Expose API keys only to the owner
+        return response()->json([
+            'data' => $merchant->makeVisible(['api_key_live', 'api_key_test']),
+        ]);
     }
 
     /**
