@@ -72,6 +72,7 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
 // Phase 10: Merchant Mode (Device Bound)
 Route::middleware(['device.gateway'])->group(function () {
     Route::post('/merchant/request', [MerchantController::class, 'requestAccess']);
+    Route::get('/merchant/request/status', [MerchantController::class, 'checkStatus']);
 });
 
 // Admin Routes (Unprotected for MVP Demo)

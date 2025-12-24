@@ -27,9 +27,18 @@ class MerchantController extends Controller
             'settlement_card_token' => 'required|string',
         ]);
 
-        // Check if device already has a pending request
-        // Note: In a real app, we'd check the DB for existing requests by device_id
-        // For MVP, we'll just create a new one.
+        // Check if device already has a pending request for this card
+        $existingRequest = \App\Models\MerchantRequest::where('device_id', $request->device_id)
+            ->where('settlement_card_token', $request->settlement_card_token)
+            ->whereIn('status', ['pending', 'approved'])
+            ->first();
+
+        if ($existingRequest) {
+            return response()->json([
+                'message' => 'A request for this card is already ' . $existingRequest->status . '.',
+                'data' => $existingRequest
+            ], 409);
+        }
 
         $merchantRequest = $this->merchantService->submitRequest(null, $request->all());
 
@@ -37,6 +46,24 @@ class MerchantController extends Controller
             'message' => 'Merchant access requested successfully.',
             'data' => $merchantRequest,
         ], 201);
+    }
+
+    /**
+     * Check status of merchant requests for a device.
+     */
+    public function checkStatus(Request $request): JsonResponse
+    {
+        $request->validate([
+            'device_id' => 'required|string',
+        ]);
+
+        $requests = \App\Models\MerchantRequest::where('device_id', $request->device_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'data' => $requests
+        ]);
     }
 
     /**
