@@ -27,9 +27,16 @@ class MerchantController extends Controller
             'settlement_card_token' => 'required|string',
         ]);
 
-        // Find the card
+        // Find the device first
+        $device = \App\Models\Device::where('device_id', $request->device_id)->first();
+
+        if (!$device) {
+            return response()->json(['message' => 'Device not found.'], 404);
+        }
+
+        // Find the card belonging to this device
         $card = \App\Models\Card::where('token_reference', $request->settlement_card_token)
-            ->where('device_id', $request->device_id) // Ensure card belongs to device
+            ->where('device_id', $device->id) // Use internal ID
             ->first();
 
         if (!$card) {
@@ -130,8 +137,13 @@ class MerchantController extends Controller
             'card_token' => 'required|string',
         ]);
 
+        $device = \App\Models\Device::where('device_id', $request->device_id)->first();
+        if (!$device) {
+            return response()->json(['message' => 'Device not found.'], 404);
+        }
+
         $card = \App\Models\Card::where('token_reference', $request->card_token)
-            ->where('device_id', $request->device_id)
+            ->where('device_id', $device->id)
             ->first();
 
         if (!$card) {
@@ -159,8 +171,13 @@ class MerchantController extends Controller
             'card_token' => 'required|string',
         ]);
 
+        $device = \App\Models\Device::where('device_id', $request->device_id)->first();
+        if (!$device) {
+            return response()->json(['message' => 'Device not found.'], 404);
+        }
+
         $card = \App\Models\Card::where('token_reference', $request->card_token)
-            ->where('device_id', $request->device_id)
+            ->where('device_id', $device->id)
             ->first();
 
         if (!$card) {
@@ -172,7 +189,7 @@ class MerchantController extends Controller
         }
 
         // Unset other defaults for this device
-        \App\Models\Card::where('device_id', $request->device_id)
+        \App\Models\Card::where('device_id', $device->id)
             ->update(['is_settlement_default' => false]);
 
         $card->is_settlement_default = true;
