@@ -13,15 +13,27 @@ class TransactionHistoryController extends Controller
     {
         $request->validate([
             'device_id' => 'required|string',
-            'card_token' => 'nullable|string', // For Consumer View
+            'card_id' => 'nullable|integer', // Changed from card_token to card_id
             'merchant_id' => 'nullable|integer', // For Merchant View
         ]);
 
         $query = LedgerEntry::query();
 
         // Consumer View: Show transactions for a specific card
-        if ($request->has('card_token')) {
-            $query->where('card_token', $request->card_token)
+        if ($request->has('card_id')) {
+            // Find the card to get its token
+            $card = \App\Models\Card::find($request->card_id);
+            
+            if (!$card) {
+                return response()->json(['message' => 'Card not found'], 404);
+            }
+
+            // Optional: Verify device ownership if Card has device_id
+            // if ($card->device_id !== $request->device_id) { ... }
+
+            // Use the token_reference from the card to query ledger
+            // Note: LedgerEntry stores 'card_token' which matches Card 'token_reference'
+            $query->where('card_token', $card->token_reference)
                   ->where('direction', 'DEBIT'); // Only show what they spent
         }
         // Merchant View: Show transactions for a specific merchant
