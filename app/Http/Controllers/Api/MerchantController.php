@@ -129,6 +129,43 @@ class MerchantController extends Controller
     }
 
     /**
+     * Cancel a merchant request by card token.
+     */
+    public function cancelByCard(Request $request): JsonResponse
+    {
+        $request->validate([
+            'device_id' => 'required|string',
+            'card_token' => 'required|string',
+        ]);
+
+        // Find the pending request for this card
+        $merchantRequest = \App\Models\MerchantRequest::where('settlement_card_token', $request->card_token)
+            ->where('device_id', $request->device_id)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$merchantRequest) {
+            return response()->json(['message' => 'No pending request found for this card.'], 404);
+        }
+
+        // Update Request Status
+        $merchantRequest->status = 'cancelled';
+        $merchantRequest->save();
+
+        // Update Card Status
+        $card = \App\Models\Card::where('token_reference', $request->card_token)->first();
+        if ($card) {
+            $card->merchant_status = 'CONSUMER_ONLY';
+            $card->save();
+        }
+
+        return response()->json([
+            'message' => 'Request cancelled successfully.',
+            'data' => $merchantRequest
+        ]);
+    }
+
+    /**
      * Disable merchant mode for a card.
      */
     public function disable(Request $request): JsonResponse
