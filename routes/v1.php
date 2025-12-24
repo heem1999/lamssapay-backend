@@ -76,6 +76,11 @@ Route::middleware(['device.gateway'])->group(function () {
     Route::post('/merchant/request/{id}/cancel', [MerchantController::class, 'cancel']);
 });
 
+// Phase 11: Merchant Payment Acceptance (SoftPOS)
+Route::middleware(['device.gateway'])->group(function () {
+    Route::post('/merchant/payments/authorize', [\App\Http\Controllers\Api\MerchantPaymentController::class, 'authorize']);
+});
+
 // Admin Routes (Unprotected for MVP Demo)
 Route::prefix('admin')->group(function () {
     Route::get('/merchants/requests', [AdminMerchantController::class, 'index']);
