@@ -34,7 +34,7 @@ class LogTransactionToLedger implements ShouldQueue
             'transaction_id' => $authResult['transaction_id'],
             'device_id' => $requestData['device_id'] ?? null,
             'card_token' => $requestData['card_token'],
-            'merchant_id' => $requestData['merchant_name'] ?? null, // Mapping name to ID for MVP
+            'merchant_id' => $requestData['merchant_id'] ?? $requestData['merchant_name'] ?? null,
             'amount' => $requestData['amount'],
             'currency' => $requestData['currency'],
             'status' => $authResult['status'],

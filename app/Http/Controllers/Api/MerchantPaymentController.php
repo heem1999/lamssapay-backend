@@ -73,19 +73,8 @@ class MerchantPaymentController extends Controller
      */
     protected function recordLedger($merchant, $customerCardToken, $amount, $currency, $transactionId)
     {
-        // 1. Consumer Entry (DEBIT)
-        \App\Models\LedgerEntry::create([
-            'ledger_id' => Str::uuid()->toString(),
-            'transaction_id' => $transactionId,
-            'device_id' => request()->device_id, // The merchant device initiated it, but we track the card
-            'card_token' => $customerCardToken,
-            'merchant_id' => $merchant->id,
-            'amount' => $amount,
-            'currency' => $currency,
-            'direction' => 'DEBIT',
-            'status' => 'APPROVED',
-            'auth_code' => strtoupper(uniqid('AUTH')),
-        ]);
+        // 1. Consumer Entry (DEBIT) - Handled by TransactionAuthorized event listener
+        // We do not need to record it here to avoid duplicate entry error.
 
         // 2. Merchant Entry (CREDIT)
         \App\Models\LedgerEntry::create([
