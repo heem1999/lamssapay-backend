@@ -33,8 +33,8 @@ class TransactionHistoryController extends Controller
 
             // Use the token_reference from the card to query ledger
             // Note: LedgerEntry stores 'card_token' which matches Card 'token_reference'
-            $query->where('card_token', $card->token_reference)
-                  ->where('direction', 'DEBIT'); // Only show what they spent
+            $query->where('card_token', $card->token_reference);
+                  // ->where('direction', 'DEBIT'); // REMOVED: Show both DEBIT (Spent) and CREDIT (Refunds/Incoming)
         }
         // Merchant View: Show transactions for a specific merchant
         elseif ($request->has('merchant_id')) {
