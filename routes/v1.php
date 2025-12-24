@@ -64,7 +64,7 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::post('/merchants/rotate-keys', [MerchantController::class, 'rotateKeys']);
 
     // Transaction Management
-    Route::get('/transactions', [TransactionController::class, 'index']);
+    // Route::get('/transactions', [TransactionController::class, 'index']); // Replaced by Phase 12
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);
     Route::post('/transactions/transfer', [TransactionController::class, 'transfer']);
 });
@@ -79,6 +79,11 @@ Route::middleware(['device.gateway'])->group(function () {
 // Phase 11: Merchant Payment Acceptance (SoftPOS)
 Route::middleware(['device.gateway'])->group(function () {
     Route::post('/merchant/payments/authorize', [\App\Http\Controllers\Api\MerchantPaymentController::class, 'authorize']);
+});
+
+// Phase 12: Transaction History (Device Bound)
+Route::middleware(['device.gateway'])->group(function () {
+    Route::get('/transactions', [\App\Http\Controllers\Api\TransactionHistoryController::class, 'index']);
 });
 
 // Admin Routes (Unprotected for MVP Demo)
