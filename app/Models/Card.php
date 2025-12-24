@@ -22,7 +22,7 @@ class Card extends Model
     ];
 
     protected $hidden = [
-        'token_reference',
+        // 'token_reference', // Exposed for MVP NFC Simulation
         'fingerprint',
     ];
 
