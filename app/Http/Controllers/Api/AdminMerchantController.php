@@ -40,17 +40,28 @@ class AdminMerchantController extends Controller
         // In production, this would be $request->user()
         $reviewer = null; 
 
-        // We need to update approveRequest to handle null reviewer if we want to be strict,
-        // or we can just update the status directly here for MVP simplicity if the service requires a User.
-        
-        // Let's update the request directly for MVP to avoid dependency on User model for Admin
+        // Update Request Status
         $merchantRequest->update([
             'status' => 'approved',
             'reviewed_at' => now(),
         ]);
 
-        // We might also want to create the Merchant record here if needed, 
-        // but for Phase 10 MVP, just flipping the status might be enough to "enable" the mode on the client.
+        // Update Card Status
+        $card = \App\Models\Card::where('token_reference', $merchantRequest->settlement_card_token)->first();
+        if ($card) {
+            $card->merchant_status = 'MERCHANT_APPROVED';
+            
+            // If this is the first approved card for the device, make it default
+            $hasDefault = \App\Models\Card::where('device_id', $card->device_id)
+                ->where('is_settlement_default', true)
+                ->exists();
+            
+            if (!$hasDefault) {
+                $card->is_settlement_default = true;
+            }
+            
+            $card->save();
+        }
         
         return response()->json([
             'message' => 'Merchant request approved.',
@@ -69,6 +80,13 @@ class AdminMerchantController extends Controller
             'status' => 'rejected',
             'reviewed_at' => now(),
         ]);
+
+        // Update Card Status
+        $card = \App\Models\Card::where('token_reference', $merchantRequest->settlement_card_token)->first();
+        if ($card) {
+            $card->merchant_status = 'CONSUMER_ONLY'; // Revert to consumer only
+            $card->save();
+        }
 
         return response()->json([
             'message' => 'Merchant request rejected.',

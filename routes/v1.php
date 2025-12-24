@@ -74,6 +74,9 @@ Route::middleware(['device.gateway'])->group(function () {
     Route::post('/merchant/request', [MerchantController::class, 'requestAccess']);
     Route::get('/merchant/request/status', [MerchantController::class, 'checkStatus']);
     Route::post('/merchant/request/{id}/cancel', [MerchantController::class, 'cancel']);
+    // New Routes for Phase 13
+    Route::post('/merchant/disable', [MerchantController::class, 'disable']);
+    Route::post('/merchant/default', [MerchantController::class, 'setDefault']);
 });
 
 // Phase 11: Merchant Payment Acceptance (SoftPOS)

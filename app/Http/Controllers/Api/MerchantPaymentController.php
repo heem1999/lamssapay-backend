@@ -36,16 +36,26 @@ class MerchantPaymentController extends Controller
         $deviceId = $request->device_id;
 
         // 2. Validate Merchant Status (Acquirer Check)
-        $merchant = MerchantRequest::where('device_id', $deviceId)
-            ->where('status', 'approved')
+        // Find the default settlement card for this device
+        $settlementCard = \App\Models\Card::where('device_id', $deviceId)
+            ->where('merchant_status', 'MERCHANT_APPROVED')
+            ->where('is_settlement_default', true)
             ->first();
 
-        if (!$merchant) {
+        if (!$settlementCard) {
             return response()->json([
                 'status' => 'DECLINED',
-                'message' => 'Device is not authorized to accept payments. Merchant status must be APPROVED.'
+                'message' => 'No active settlement card found. Please set a default card for merchant payments.'
             ], 403);
         }
+
+        // Get Merchant Info (Optional: from MerchantRequest if needed for business name)
+        $merchantRequest = MerchantRequest::where('settlement_card_token', $settlementCard->token_reference)
+             ->where('status', 'approved')
+             ->first();
+
+        $merchantName = $merchantRequest->business_name ?? 'Merchant Device ' . substr($deviceId, 0, 6);
+        $merchantId = $merchantRequest->id ?? 0;
 
         // 3. Process Payment (Issuer Check)
         // We treat the nfc_payload as the card_token for the MVP
@@ -53,16 +63,16 @@ class MerchantPaymentController extends Controller
             'card_token' => $request->nfc_payload,
             'amount' => $request->amount,
             'currency' => $request->currency,
-            'merchant_name' => $merchant->business_name ?? 'Merchant Device ' . substr($deviceId, 0, 6),
+            'merchant_name' => $merchantName,
             'device_id' => $deviceId, // The merchant's device
-            'merchant_id' => $merchant->id,
+            'merchant_id' => $merchantId,
         ];
 
         $result = $this->paymentService->authorize($paymentData);
 
         // 4. Ledger Recording (Mock for MVP)
         if ($result['status'] === 'APPROVED') {
-            $this->recordLedger($merchant, $request->nfc_payload, $request->amount, $request->currency, $result['transaction_id']);
+            $this->recordLedger($settlementCard, $merchantId, $request->nfc_payload, $request->amount, $request->currency, $result['transaction_id']);
         }
 
         return response()->json($result);
@@ -71,7 +81,7 @@ class MerchantPaymentController extends Controller
     /**
      * Record the transaction in the ledger.
      */
-    protected function recordLedger($merchant, $customerCardToken, $amount, $currency, $transactionId)
+    protected function recordLedger($settlementCard, $merchantId, $customerCardToken, $amount, $currency, $transactionId)
     {
         // 1. Consumer Entry (DEBIT) - Handled by TransactionAuthorized event listener
         // We do not need to record it here to avoid duplicate entry error.
@@ -81,8 +91,8 @@ class MerchantPaymentController extends Controller
             'ledger_id' => Str::uuid()->toString(),
             'transaction_id' => $transactionId . '-M', // Append suffix to avoid unique constraint violation on transaction_id if it's unique in DB
             'device_id' => request()->device_id,
-            'card_token' => $merchant->settlement_card_token,
-            'merchant_id' => $merchant->id,
+            'card_token' => $settlementCard->token_reference,
+            'merchant_id' => $merchantId,
             'amount' => $amount,
             'currency' => $currency,
             'direction' => 'CREDIT',

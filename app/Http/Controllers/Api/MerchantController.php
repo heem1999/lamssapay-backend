@@ -27,20 +27,28 @@ class MerchantController extends Controller
             'settlement_card_token' => 'required|string',
         ]);
 
-        // Check if device already has a pending request for this card
-        $existingRequest = \App\Models\MerchantRequest::where('device_id', $request->device_id)
-            ->where('settlement_card_token', $request->settlement_card_token)
-            ->whereIn('status', ['pending', 'approved'])
+        // Find the card
+        $card = \App\Models\Card::where('token_reference', $request->settlement_card_token)
+            ->where('device_id', $request->device_id) // Ensure card belongs to device
             ->first();
 
-        if ($existingRequest) {
+        if (!$card) {
+            return response()->json(['message' => 'Card not found.'], 404);
+        }
+
+        // Check if card is already pending or approved
+        if (in_array($card->merchant_status, ['MERCHANT_PENDING', 'MERCHANT_APPROVED'])) {
             return response()->json([
-                'message' => 'A request for this card is already ' . $existingRequest->status . '.',
-                'data' => $existingRequest
+                'message' => 'Card is already ' . strtolower(str_replace('MERCHANT_', '', $card->merchant_status)) . '.',
             ], 409);
         }
 
+        // Create Request
         $merchantRequest = $this->merchantService->submitRequest(null, $request->all());
+
+        // Update Card Status
+        $card->merchant_status = 'MERCHANT_PENDING';
+        $card->save();
 
         return response()->json([
             'message' => 'Merchant access requested successfully.',
@@ -89,13 +97,82 @@ class MerchantController extends Controller
              return response()->json(['message' => 'Request is already ' . $merchantRequest->status . '.'], 400);
         }
 
+        // Update Request Status
         $merchantRequest->status = 'cancelled';
         $merchantRequest->save();
+
+        // Update Card Status
+        $card = \App\Models\Card::where('token_reference', $merchantRequest->settlement_card_token)->first();
+        if ($card) {
+            $card->merchant_status = 'CONSUMER_ONLY';
+            $card->save();
+        }
 
         return response()->json([
             'message' => 'Request cancelled successfully.',
             'data' => $merchantRequest
         ]);
+    }
+
+    /**
+     * Disable merchant mode for a card.
+     */
+    public function disable(Request $request): JsonResponse
+    {
+        $request->validate([
+            'device_id' => 'required|string',
+            'card_token' => 'required|string',
+        ]);
+
+        $card = \App\Models\Card::where('token_reference', $request->card_token)
+            ->where('device_id', $request->device_id)
+            ->first();
+
+        if (!$card) {
+            return response()->json(['message' => 'Card not found.'], 404);
+        }
+
+        if ($card->merchant_status !== 'MERCHANT_APPROVED') {
+            return response()->json(['message' => 'Card is not approved for merchant use.'], 400);
+        }
+
+        $card->merchant_status = 'MERCHANT_DISABLED';
+        $card->is_settlement_default = false;
+        $card->save();
+
+        return response()->json(['message' => 'Merchant mode disabled for this card.']);
+    }
+
+    /**
+     * Set a card as the default settlement card.
+     */
+    public function setDefault(Request $request): JsonResponse
+    {
+        $request->validate([
+            'device_id' => 'required|string',
+            'card_token' => 'required|string',
+        ]);
+
+        $card = \App\Models\Card::where('token_reference', $request->card_token)
+            ->where('device_id', $request->device_id)
+            ->first();
+
+        if (!$card) {
+            return response()->json(['message' => 'Card not found.'], 404);
+        }
+
+        if ($card->merchant_status !== 'MERCHANT_APPROVED') {
+            return response()->json(['message' => 'Card must be approved to be set as default.'], 400);
+        }
+
+        // Unset other defaults for this device
+        \App\Models\Card::where('device_id', $request->device_id)
+            ->update(['is_settlement_default' => false]);
+
+        $card->is_settlement_default = true;
+        $card->save();
+
+        return response()->json(['message' => 'Default settlement card updated.']);
     }
 
     /**

@@ -19,6 +19,8 @@ class Card extends Model
         'fingerprint',
         'status',
         'issuer_reference',
+        'merchant_status',
+        'is_settlement_default',
     ];
 
     protected $hidden = [
@@ -28,6 +30,7 @@ class Card extends Model
 
     protected $casts = [
         'is_default' => 'boolean',
+        'is_settlement_default' => 'boolean',
     ];
 
     public function device()
