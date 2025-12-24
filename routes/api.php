@@ -23,3 +23,5 @@ Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);
 })->name('login');
 
+Route::get('/transactions', [App\Http\Controllers\Api\TransactionHistoryController::class, 'index']);
+

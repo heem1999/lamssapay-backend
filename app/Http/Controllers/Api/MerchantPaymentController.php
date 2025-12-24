@@ -72,12 +72,32 @@ class MerchantPaymentController extends Controller
      */
     protected function recordLedger($merchant, $customerCardToken, $amount, $currency, $transactionId)
     {
-        // In a real system, this would write to the double-entry ledger.
-        // For MVP, we'll log it.
-        Log::info("Ledger Transaction [$transactionId]: Debit Customer ($customerCardToken) $amount $currency -> Credit Merchant ($merchant->id) Settlement Card ($merchant->settlement_card_token)");
-        
-        // TODO: Implement actual LedgerService call in Phase 12 or if required now.
-        // Based on Phase 11 requirements: "Consumer Ledger Entry DEBIT amount, Merchant Ledger Entry CREDIT amount"
-        // We will implement a basic LedgerService call if it exists, or create one.
+        // 1. Consumer Entry (DEBIT)
+        \App\Models\LedgerEntry::create([
+            'transaction_id' => $transactionId,
+            'device_id' => request()->device_id, // The merchant device initiated it, but we track the card
+            'card_token' => $customerCardToken,
+            'merchant_id' => $merchant->id,
+            'amount' => $amount,
+            'currency' => $currency,
+            'direction' => 'DEBIT',
+            'status' => 'APPROVED',
+            'auth_code' => strtoupper(uniqid('AUTH')),
+        ]);
+
+        // 2. Merchant Entry (CREDIT)
+        \App\Models\LedgerEntry::create([
+            'transaction_id' => $transactionId,
+            'device_id' => request()->device_id,
+            'card_token' => $merchant->settlement_card_token,
+            'merchant_id' => $merchant->id,
+            'amount' => $amount,
+            'currency' => $currency,
+            'direction' => 'CREDIT',
+            'status' => 'APPROVED',
+            'auth_code' => strtoupper(uniqid('AUTH')),
+        ]);
+
+        Log::info("Ledger Recorded: $transactionId");
     }
 }
