@@ -8,6 +8,7 @@ use App\Services\Payment\PaymentAuthorizationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class MerchantPaymentController extends Controller
 {
@@ -74,6 +75,7 @@ class MerchantPaymentController extends Controller
     {
         // 1. Consumer Entry (DEBIT)
         \App\Models\LedgerEntry::create([
+            'ledger_id' => Str::uuid()->toString(),
             'transaction_id' => $transactionId,
             'device_id' => request()->device_id, // The merchant device initiated it, but we track the card
             'card_token' => $customerCardToken,
@@ -87,7 +89,8 @@ class MerchantPaymentController extends Controller
 
         // 2. Merchant Entry (CREDIT)
         \App\Models\LedgerEntry::create([
-            'transaction_id' => $transactionId,
+            'ledger_id' => Str::uuid()->toString(),
+            'transaction_id' => $transactionId . '-M', // Append suffix to avoid unique constraint violation on transaction_id if it's unique in DB
             'device_id' => request()->device_id,
             'card_token' => $merchant->settlement_card_token,
             'merchant_id' => $merchant->id,
