@@ -73,6 +73,7 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
 Route::middleware(['device.gateway'])->group(function () {
     Route::post('/merchant/request', [MerchantController::class, 'requestAccess']);
     Route::get('/merchant/request/status', [MerchantController::class, 'checkStatus']);
+    Route::post('/merchant/request/{id}/cancel', [MerchantController::class, 'cancel']);
 });
 
 // Admin Routes (Unprotected for MVP Demo)

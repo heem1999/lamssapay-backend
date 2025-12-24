@@ -67,6 +67,38 @@ class MerchantController extends Controller
     }
 
     /**
+     * Cancel a merchant request.
+     */
+    public function cancel(Request $request, $id): JsonResponse
+    {
+        $request->validate([
+            'device_id' => 'required|string',
+        ]);
+
+        $merchantRequest = \App\Models\MerchantRequest::find($id);
+
+        if (!$merchantRequest) {
+            return response()->json(['message' => 'Request not found.'], 404);
+        }
+
+        if ($merchantRequest->device_id !== $request->device_id) {
+             return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        if (in_array($merchantRequest->status, ['cancelled', 'rejected'])) {
+             return response()->json(['message' => 'Request is already ' . $merchantRequest->status . '.'], 400);
+        }
+
+        $merchantRequest->status = 'cancelled';
+        $merchantRequest->save();
+
+        return response()->json([
+            'message' => 'Request cancelled successfully.',
+            'data' => $merchantRequest
+        ]);
+    }
+
+    /**
      * Submit a merchant application.
      */
     public function register(RegisterMerchantRequest $request): JsonResponse
