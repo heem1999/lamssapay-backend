@@ -78,7 +78,8 @@ class MerchantController extends Controller
             'device_id' => 'required|string',
         ]);
 
-        $requests = \App\Models\MerchantRequest::where('device_id', $request->device_id)
+        $requests = \App\Models\MerchantRequest::with('card')
+            ->where('device_id', $request->device_id)
             ->orderBy('created_at', 'desc')
             ->get();
 

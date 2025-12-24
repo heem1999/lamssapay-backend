@@ -22,7 +22,7 @@ class AdminMerchantController extends Controller
      */
     public function index(): JsonResponse
     {
-        $requests = MerchantRequest::where('status', 'pending')->latest()->get();
+        $requests = MerchantRequest::with('card')->where('status', 'pending')->latest()->get();
 
         return response()->json([
             'data' => $requests,

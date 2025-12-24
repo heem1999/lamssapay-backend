@@ -45,4 +45,9 @@ class MerchantRequest extends Model
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
+
+    public function card()
+    {
+        return $this->belongsTo(Card::class, 'settlement_card_token', 'token_reference');
+    }
 }
