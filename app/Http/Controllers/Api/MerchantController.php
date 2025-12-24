@@ -44,16 +44,22 @@ class MerchantController extends Controller
         }
 
         // Create Request
-        $merchantRequest = $this->merchantService->submitRequest(null, $request->all());
+        try {
+            $merchantRequest = $this->merchantService->submitRequest(null, $request->all());
 
-        // Update Card Status
-        $card->merchant_status = 'MERCHANT_PENDING';
-        $card->save();
+            // Update Card Status
+            $card->merchant_status = 'MERCHANT_PENDING';
+            $card->save();
 
-        return response()->json([
-            'message' => 'Merchant access requested successfully.',
-            'data' => $merchantRequest,
-        ], 201);
+            return response()->json([
+                'message' => 'Merchant access requested successfully.',
+                'data' => $merchantRequest,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to process request: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

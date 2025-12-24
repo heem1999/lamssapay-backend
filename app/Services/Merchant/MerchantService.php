@@ -34,19 +34,21 @@ class MerchantService
     /**
      * Approve a merchant request and create the merchant profile.
      */
-    public function approveRequest(MerchantRequest $request, User $reviewer): Merchant
+    public function approveRequest(MerchantRequest $request, ?User $reviewer): Merchant
     {
         return DB::transaction(function () use ($request, $reviewer) {
             $request->update([
                 'status' => 'approved',
-                'reviewed_by' => $reviewer->id,
+                'reviewed_by' => $reviewer?->id,
                 'reviewed_at' => now(),
             ]);
 
             // Create Merchant Profile
+            // Note: For Phase 10 MVP (Device-based), user_id might be null.
+            // We create a merchant record linked to the device/request if user_id is null.
             $merchant = Merchant::create([
-                'user_id' => $request->user_id,
-                'business_name' => $request->business_name,
+                'user_id' => $request->user_id, // Can be null
+                'business_name' => $request->business_name ?? 'Merchant ' . substr($request->device_id, 0, 6),
                 'business_email' => $request->business_email,
                 'business_phone' => $request->business_phone,
                 'business_address' => $request->business_address,
@@ -57,8 +59,10 @@ class MerchantService
                 'api_key_test' => 'sk_test_' . Str::random(32),
             ]);
 
-            // Update User Role
-            $request->user->update(['role' => 'merchant']);
+            // Update User Role if user exists
+            if ($request->user) {
+                $request->user->update(['role' => 'merchant']);
+            }
 
             return $merchant;
         });
