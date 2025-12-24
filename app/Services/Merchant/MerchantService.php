@@ -13,18 +13,20 @@ class MerchantService
     /**
      * Submit a new merchant application.
      */
-    public function submitRequest(User $user, array $data): MerchantRequest
+    public function submitRequest(?User $user, array $data): MerchantRequest
     {
         return MerchantRequest::create([
-            'user_id' => $user->id,
-            'business_name' => $data['business_name'],
-            'business_type' => $data['business_type'],
-            'business_registration_number' => $data['business_registration_number'],
-            'tax_id' => $data['tax_id'],
-            'business_email' => $data['business_email'],
-            'business_phone' => $data['business_phone'],
-            'business_address' => $data['business_address'],
-            'documents' => $data['documents'] ?? [], // Assuming file upload handled elsewhere
+            'user_id' => $user?->id,
+            'device_id' => $data['device_id'] ?? null,
+            'settlement_card_token' => $data['settlement_card_token'] ?? null,
+            'business_name' => $data['business_name'] ?? null,
+            'business_type' => $data['business_type'] ?? null,
+            'business_registration_number' => $data['business_registration_number'] ?? null,
+            'tax_id' => $data['tax_id'] ?? null,
+            'business_email' => $data['business_email'] ?? null,
+            'business_phone' => $data['business_phone'] ?? null,
+            'business_address' => $data['business_address'] ?? null,
+            'documents' => $data['documents'] ?? [],
             'status' => 'pending',
         ]);
     }

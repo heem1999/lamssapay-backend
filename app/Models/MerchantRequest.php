@@ -12,6 +12,8 @@ class MerchantRequest extends Model
 
     protected $fillable = [
         'user_id',
+        'device_id',
+        'settlement_card_token',
         'business_name',
         'business_type',
         'business_registration_number',

@@ -18,6 +18,28 @@ class MerchantController extends Controller
     }
 
     /**
+     * Request merchant access (Phase 10 MVP).
+     */
+    public function requestAccess(Request $request): JsonResponse
+    {
+        $request->validate([
+            'device_id' => 'required|string',
+            'settlement_card_token' => 'required|string',
+        ]);
+
+        // Check if device already has a pending request
+        // Note: In a real app, we'd check the DB for existing requests by device_id
+        // For MVP, we'll just create a new one.
+
+        $merchantRequest = $this->merchantService->submitRequest(null, $request->all());
+
+        return response()->json([
+            'message' => 'Merchant access requested successfully.',
+            'data' => $merchantRequest,
+        ], 201);
+    }
+
+    /**
      * Submit a merchant application.
      */
     public function register(RegisterMerchantRequest $request): JsonResponse

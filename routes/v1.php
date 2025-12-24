@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminMerchantController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CardController;
 use App\Http\Controllers\Api\DeviceController;
@@ -66,6 +67,18 @@ Route::middleware(['auth:sanctum', 'device.gateway'])->group(function () {
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);
     Route::post('/transactions/transfer', [TransactionController::class, 'transfer']);
+});
+
+// Phase 10: Merchant Mode (Device Bound)
+Route::middleware(['device.gateway'])->group(function () {
+    Route::post('/merchant/request', [MerchantController::class, 'requestAccess']);
+});
+
+// Admin Routes (Unprotected for MVP Demo)
+Route::prefix('admin')->group(function () {
+    Route::get('/merchants/requests', [AdminMerchantController::class, 'index']);
+    Route::post('/merchants/requests/{id}/approve', [AdminMerchantController::class, 'approve']);
+    Route::post('/merchants/requests/{id}/reject', [AdminMerchantController::class, 'reject']);
 });
 
 // Device-only Protected Routes (No User Auth required, just Device Auth)
