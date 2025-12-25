@@ -94,6 +94,7 @@ Route::middleware(['device.gateway'])->group(function () {
 Route::prefix('admin')->group(function () {
     Route::get('/merchants/requests', [AdminMerchantController::class, 'index']);
     Route::post('/merchants/requests/{id}/approve', [AdminMerchantController::class, 'approve']);
+    Route::post('/merchants/requests/approve-by-card', [AdminMerchantController::class, 'approveByCard']);
     Route::post('/merchants/requests/{id}/reject', [AdminMerchantController::class, 'reject']);
 });
 

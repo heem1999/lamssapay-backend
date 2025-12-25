@@ -69,8 +69,26 @@ class AdminMerchantController extends Controller
         ]);
     }
 
-    /**
-     * Reject a merchant request.
+    /**     * Approve a merchant request by card token (Dev/MVP Helper).
+     */
+    public function approveByCard(Request $request): JsonResponse
+    {
+        $request->validate([
+            'card_token' => 'required|string',
+        ]);
+
+        $merchantRequest = MerchantRequest::where('settlement_card_token', $request->card_token)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$merchantRequest) {
+            return response()->json(['message' => 'No pending request found for this card.'], 404);
+        }
+
+        return $this->approve($request, $merchantRequest->id);
+    }
+
+    /**     * Reject a merchant request.
      */
     public function reject(Request $request, $id): JsonResponse
     {
