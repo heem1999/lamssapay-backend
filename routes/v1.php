@@ -75,6 +75,8 @@ Route::middleware(['device.gateway'])->group(function () {
     Route::get('/merchant/request/status', [MerchantController::class, 'checkStatus']);
     Route::post('/merchant/request/cancel-by-card', [MerchantController::class, 'cancelByCard']);
     Route::post('/merchant/request/{id}/cancel', [MerchantController::class, 'cancel']);
+    // New: Get all merchant requests for a specific card
+    Route::get('/merchant/requests/by-card', [MerchantController::class, 'requestsByCard']);
     // New Routes for Phase 13
     Route::post('/merchant/disable', [MerchantController::class, 'disable']);
     Route::post('/merchant/default', [MerchantController::class, 'setDefault']);

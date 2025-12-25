@@ -1,15 +1,30 @@
 <?php
-
 namespace App\Http\Controllers\Api;
+    use App\Http\Controllers\Controller;
+    use App\Http\Requests\Merchant\RegisterMerchantRequest;
+    use App\Services\Merchant\MerchantService;
+    use Illuminate\Http\JsonResponse;
+    use Illuminate\Http\Request;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Merchant\RegisterMerchantRequest;
-use App\Services\Merchant\MerchantService;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+    class MerchantController extends Controller
+    {
+        /**
+         * Get all merchant requests for a specific card (by token).
+         */
+        public function requestsByCard(Request $request): JsonResponse
+        {
+            $request->validate([
+                'card_token' => 'required|string',
+            ]);
 
-class MerchantController extends Controller
-{
+            $requests = \App\Models\MerchantRequest::where('settlement_card_token', $request->card_token)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'data' => $requests
+            ]);
+        }
     protected $merchantService;
 
     public function __construct(MerchantService $merchantService)
