@@ -78,6 +78,7 @@ Route::middleware(['device.gateway'])->group(function () {
     // New Routes for Phase 13
     Route::post('/merchant/disable', [MerchantController::class, 'disable']);
     Route::post('/merchant/default', [MerchantController::class, 'setDefault']);
+    Route::post('/merchant/default/unset', [MerchantController::class, 'unsetDefault']);
 });
 
 // Phase 11: Merchant Payment Acceptance (SoftPOS)

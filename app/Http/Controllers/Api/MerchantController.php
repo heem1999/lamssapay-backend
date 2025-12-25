@@ -237,6 +237,35 @@ class MerchantController extends Controller
     }
 
     /**
+     * Unset a card as the default settlement card.
+     */
+    public function unsetDefault(Request $request): JsonResponse
+    {
+        $request->validate([
+            'device_id' => 'required|string',
+            'card_token' => 'required|string',
+        ]);
+
+        $device = \App\Models\Device::where('device_id', $request->device_id)->first();
+        if (!$device) {
+            return response()->json(['message' => 'Device not found.'], 404);
+        }
+
+        $card = \App\Models\Card::where('token_reference', $request->card_token)
+            ->where('device_id', $device->id)
+            ->first();
+
+        if (!$card) {
+            return response()->json(['message' => 'Card not found.'], 404);
+        }
+
+        $card->is_settlement_default = false;
+        $card->save();
+
+        return response()->json(['message' => 'Default settlement card unset.']);
+    }
+
+    /**
      * Submit a merchant application.
      */
     public function register(RegisterMerchantRequest $request): JsonResponse

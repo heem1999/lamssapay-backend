@@ -36,8 +36,18 @@ class MerchantPaymentController extends Controller
         $deviceId = $request->device_id;
 
         // 2. Validate Merchant Status (Acquirer Check)
+        // Find the device first to get the internal ID
+        $device = \App\Models\Device::where('device_id', $deviceId)->first();
+
+        if (!$device) {
+            return response()->json([
+                'status' => 'DECLINED',
+                'message' => 'Device not registered.'
+            ], 403);
+        }
+
         // Find the default settlement card for this device
-        $settlementCard = \App\Models\Card::where('device_id', $deviceId)
+        $settlementCard = \App\Models\Card::where('device_id', $device->id)
             ->where('merchant_status', 'MERCHANT_APPROVED')
             ->where('is_settlement_default', true)
             ->first();
